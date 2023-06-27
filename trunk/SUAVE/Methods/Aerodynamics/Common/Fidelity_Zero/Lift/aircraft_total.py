@@ -29,8 +29,10 @@ def aircraft_total(state,settings,geometry):
 
     Properties Used:
     N/A
-    """      
+    """
+
+    delta_lift_prop_wing = state.conditions.aerodynamics.propeller_wing_interaction_delta_lift
     
-    aircraft_lift_total = state.conditions.aerodynamics.lift_coefficient
+    aircraft_lift_total = state.conditions.aerodynamics.lift_coefficient + delta_lift_prop_wing
 
     return aircraft_lift_total

@@ -52,11 +52,10 @@ def parasite_drag_propulsor(state,settings,geometry):
     # unpack inputs
     conditions    = state.conditions
     configuration = settings
-    
+
     propulsor = geometry
     Sref      = propulsor.nacelle_diameter**2. / 4. * np.pi
     Swet      = propulsor.areas.wetted
-    
     l_prop = propulsor.engine_length
     d_prop = propulsor.nacelle_diameter
     
@@ -73,7 +72,7 @@ def parasite_drag_propulsor(state,settings,geometry):
     cf_prop, k_comp, k_reyn = compressible_turbulent_flat_plate(Re_prop,Mc,Tc)
     
     ## form factor according to Raymer equation (pg 283 of Aircraft Design: A Conceptual Approach)
-    k_prop = 1 + 0.35 / (float(l_prop)/float(d_prop))  
+    k_prop =1 + 0.35 / (float(l_prop)/float(d_prop)) # 1.5 #from Raymer
     
    
     # find the final result    

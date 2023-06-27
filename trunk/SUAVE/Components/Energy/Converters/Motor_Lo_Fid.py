@@ -52,8 +52,8 @@ class Motor_Lo_Fid(Energy_Component):
         self.resistance         = 0.0
         self.no_load_current    = 0.0
         self.speed_constant     = 0.0
-        self.gear_ratio         = 0.0
-        self.gearbox_efficiency = 0.0
+        self.gear_ratio         = 1.0 #0.0
+        self.gearbox_efficiency = 1.0 #0.0
         self.expected_current   = 0.0
         self.motor_efficiency   = 0.0
         self.rated_power        = 0.0

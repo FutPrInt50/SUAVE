@@ -96,7 +96,7 @@ def compute_component_centers_of_gravity(vehicle, nose_load = 0.06):
 
     # Go through all the fuselages
     for fuse in vehicle.fuselages:
-        fuse.mass_properties.center_of_gravity[0][0]   = .45*fuse.lengths.total
+        fuse.mass_properties.center_of_gravity[0][0]   = .40*fuse.lengths.total #0.45 turbofan 0.4 turboprop
 
     #---------------------------------------------------------------------------------
     # All other components
@@ -130,7 +130,8 @@ def compute_component_centers_of_gravity(vehicle, nose_load = 0.06):
     baggage                                                 = vehicle.payload.baggage
     cargo                                                   = vehicle.payload.cargo
     air_conditioner                                         = vehicle.systems.air_conditioner
-    optionals                                               = vehicle.systems.optionals  
+    optionals                                               = vehicle.systems.optionals
+    crew                                                    = vehicle.systems.crew
     fuel                                                    = vehicle.systems.fuel
     control_systems                                         = vehicle.systems.control_systems
     electrical_systems                                      = vehicle.systems.electrical_systems
@@ -148,21 +149,24 @@ def compute_component_centers_of_gravity(vehicle, nose_load = 0.06):
     apu.origin[0][0]                                           = 0.9 * length_scale   
     apu.mass_properties.center_of_gravity[0][0]                = 0.0
     
-    passengers.origin[0][0]                                    = 0.51 * length_scale  
+    passengers.origin[0][0]                                    = 0.44 * length_scale #0.51
     passengers.mass_properties.center_of_gravity[0][0]         = 0.0
     
     baggage.origin[0][0]                                       = 0.51 * length_scale  
     baggage.mass_properties.center_of_gravity[0][0]            = 0.0
     
     cargo.origin[0][0]                                         = 0.51 * length_scale  
-    cargo.mass_properties.center_of_gravity[0][0]              = 0.0    
+    cargo.mass_properties.center_of_gravity[0][0]              = 0.0
     
     air_conditioner.origin[0][0]                               = nose_length
     air_conditioner.mass_properties.center_of_gravity[0][0]    = 0.0
     
-    optionals.origin[0][0]                                     = 0.51 * length_scale  
-    optionals.mass_properties.center_of_gravity[0][0]          = 0.0   
-        
+    optionals.origin[0][0]                                     = 0.44 * length_scale #0.51
+    optionals.mass_properties.center_of_gravity[0][0]          = 0.0
+
+    crew.origin[0][0]                                          = 0.44 * length_scale #0.51
+    crew.mass_properties.center_of_gravity[0][0]               = 0.0
+
     fuel.origin[0][0]                                          = vehicle.wings.main_wing.origin[0][0] 
     fuel.mass_properties.center_of_gravity                     = vehicle.wings.main_wing.mass_properties.center_of_gravity
     

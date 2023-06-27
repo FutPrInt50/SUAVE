@@ -50,7 +50,7 @@ def parasite_drag_pylon(state,settings,geometry):
     conditions = state.conditions
     configuration = settings
     
-    pylon_factor        =  0.20 # 20% of propulsor drag
+    pylon_factor        = 0.00 #0.20 # 20% of propulsor drag
     n_propulsors        =  len(geometry.propulsors)  # number of propulsive system in vehicle (NOT # of ENGINES)
     pylon_parasite_drag = 0.00
     pylon_wetted_area   = 0.00

@@ -31,3 +31,4 @@ class Lithium_Ion(Battery):
         self.ragone.const_2     = -.01533 /(Units.Wh/Units.kg)
         self.ragone.lower_bound = 60.     *Units.Wh/Units.kg
         self.ragone.upper_bound = 225.    *Units.Wh/Units.kg
+        self.battery_technology_factor = 1.

@@ -81,6 +81,7 @@ def update_atmosphere(segment):
     conditions.freestream.density           = atmo_data.density
     conditions.freestream.speed_of_sound    = atmo_data.speed_of_sound
     conditions.freestream.dynamic_viscosity = atmo_data.dynamic_viscosity
+    conditions.freestream.delta_ISA         = atmo_data.delta_ISA
     
     return
     

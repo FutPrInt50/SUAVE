@@ -14,6 +14,7 @@ from . import Distributors
 from . import Networks
 from . import Peripherals
 from . import Processes
+from . import Thermal_Management_System
 
 
 

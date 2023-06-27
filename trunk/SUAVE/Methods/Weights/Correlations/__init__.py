@@ -10,3 +10,5 @@ from . import UAV
 from . import Common
 from . import FLOPS
 from . import Raymer
+from . import Electric
+from . import Thermal_Management_System

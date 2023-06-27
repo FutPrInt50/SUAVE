@@ -93,7 +93,10 @@ class Fuselage(Lofted_Body):
         self.fineness = Data()
         self.fineness.nose = 0.0
         self.fineness.tail = 0.0
-        
+
+        self.n_belly = 0 # 0: no extra belly 1: one belly
+        self.size_belly = 0.15 #ratio of belly wetted area to fuselage wetted area. Default value is 15%
+
         self.differential_pressure = 0.0
         
         # for BWB 
@@ -109,6 +112,9 @@ class Fuselage(Lofted_Body):
         self.generative_design_char_max_bounds = [np.inf,np.inf,np.inf,np.inf,np.inf]    
 
         self.Fuel_Tanks = Physical_Component.Container()
+
+        # for cm_alpha(fuselage) another method "k2-k1" for stability
+        self.cm_alpha_method = None
 
         # For VSP
         self.vsp_data                = Data()

@@ -139,6 +139,7 @@ class US_Standard_1976(Atmospheric):
         T0    = zeros * 0.0
         p0    = zeros * 0.0
         alpha = zeros * 0.0
+        delta_ISA = np.ones_like(zs)
         
         # populate the altitude breaks
         # this uses >= and <= to capture both edges and because values should be the same at the edges
@@ -162,6 +163,8 @@ class US_Standard_1976(Atmospheric):
         a   = gas.compute_speed_of_sound(T,p,var_gamma)
         mu  = gas.compute_absolute_viscosity(T)
         gamma = gas.compute_gamma(T,p)
+
+        delta_ISA = delta_ISA * delta_isa
                 
         atmo_data = Conditions()
         atmo_data.expand_rows(zs.shape[0])
@@ -171,6 +174,7 @@ class US_Standard_1976(Atmospheric):
         atmo_data.speed_of_sound          = a
         atmo_data.dynamic_viscosity       = mu
         atmo_data.ratio_of_specific_heats = gamma
+        atmo_data.delta_ISA               = delta_ISA
         
         return atmo_data
 

@@ -73,7 +73,7 @@ def induced_drag_aircraft(state,settings,geometry):
     K       = configuration.viscous_lift_dependent_drag_factor
     e_osw   = configuration.oswald_efficiency_factor	
     e_span  = configuration.span_efficiency
-    CL      = conditions.aerodynamics.lift_coefficient
+    CL      = conditions.aerodynamics.lift_coefficient - conditions.aerodynamics.propeller_wing_interaction_delta_lift #todo
     CDi     = conditions.aerodynamics.drag_breakdown.induced.inviscid
     S_ref   = geometry.reference_area
 
@@ -133,7 +133,7 @@ def induced_drag_aircraft(state,settings,geometry):
         for wing in wings:
             if wing.areas.reference>S:
                 AR = wing.aspect_ratio
-                S  = wing.areas.reference 
+                S = wing.areas.reference
                 
         # Calculate the induced drag       
         total_induced_drag = CL **2 / (np.pi*AR*e_osw)

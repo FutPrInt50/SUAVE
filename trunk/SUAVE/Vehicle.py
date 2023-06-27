@@ -239,8 +239,12 @@ class Vehicle(Data):
                 
         CG = total/mass
         
-        self.mass_properties.center_of_gravity = CG
-                
+        self.mass_properties.center_of_gravity = CG     # CG Takeoff Mass
+        self.mass_properties.zero_fuel_center_of_gravity = (CG * self.mass_properties.takeoff -
+                            self.systems.fuel.mass_properties.mass*(np.sum(np.array(self.systems.fuel.origin),axis=0)+
+                            self.systems.fuel.mass_properties.center_of_gravity)/len(self.systems.fuel.origin)) / \
+                            self.mass_properties.zero_fuel_weight
+
         return CG
 
 

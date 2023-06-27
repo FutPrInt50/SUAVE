@@ -1,0 +1,4 @@
+These are the runnable files
+Choose the architecture and run the file "Aircraft_..." in the Environment based on the SUAVE files
+
+Turboprop_Architecture_CenterofGravity is the latest version --> sizing of wing origin and VTP, HTP included, engine sizing, too

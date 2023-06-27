@@ -117,7 +117,7 @@ def noise_airframe_Fink(segment,analyses,config,settings,ioprint = 0, filename=0
     elif wing.main_wing.control_surfaces.flap.configuration_type == 'double_slotted':
         slots = 2
     elif wing.main_wing.control_surfaces.flap.configuration_type == 'triple_slotted':
-        slots = 3  
+        slots = 3
 
     # Geometric information from the source to observer position
     distance_vector = segment.dist    

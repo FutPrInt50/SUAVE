@@ -12,9 +12,11 @@ from .Constant_Speed_Constant_Angle_Noise      import Constant_Speed_Constant_An
 from .Constant_Speed_Constant_Rate             import Constant_Speed_Constant_Rate
 from .Constant_Speed_Linear_Altitude           import Constant_Speed_Linear_Altitude
 from .Constant_Throttle_Constant_Speed         import Constant_Throttle_Constant_Speed
+from .Constant_Throttle_Constant_CAS           import Constant_Throttle_Constant_CAS
 from .Linear_Mach_Constant_Rate                import Linear_Mach_Constant_Rate
 from .Linear_Speed_Constant_Rate               import Linear_Speed_Constant_Rate 
 from .Constant_EAS_Constant_Rate               import Constant_EAS_Constant_Rate
 from .Constant_CAS_Constant_Rate               import Constant_CAS_Constant_Rate
 from .Optimized                                import Optimized
 from .Unknown_Throttle                         import Unknown_Throttle
+from .constant_throttle_constant_cas_wrapper   import constant_throttle_constant_cas_wrapper

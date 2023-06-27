@@ -196,6 +196,8 @@ class Segment(Analysis):
         """          
         if state is None:
             state = self.state
+        if self.tag =="cruise":
+            a=1
         self.process(self)
         return self
     

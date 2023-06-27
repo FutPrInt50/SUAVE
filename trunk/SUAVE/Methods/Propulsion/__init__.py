@@ -16,3 +16,5 @@ from .rayleigh import rayleigh
 from .nozzle_calculations import exit_Mach_shock, mach_area, normal_shock, pressure_ratio_isentropic, pressure_ratio_shock_in_nozzle
 from . import electric_motor_sizing
 from .liquid_rocket_sizing import liquid_rocket_sizing
+from .engine_interp_gasturb import engine_interp_gasturb
+from .gas_turbine_emission_calculation import gas_turbine_calculate_emission

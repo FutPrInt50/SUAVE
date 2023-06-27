@@ -85,7 +85,7 @@ def taw_cmalpha(geometry,mach,conditions,configuration):
     
     weights      = conditions.weights.total_mass
     fuel_weights = weights-configuration.mass_properties.max_zero_fuel
-    cg           = compute_mission_center_of_gravity(configuration,fuel_weights)		
+    cg           = compute_mission_center_of_gravity(geometry,fuel_weights)
     x_cg         = np.atleast_2d(cg[:,0]).T # get cg location at every point in the mission    
     
 
@@ -94,11 +94,20 @@ def taw_cmalpha(geometry,mach,conditions,configuration):
         w_f   = geometry.fuselages['fuselage'].width
         l_f   = geometry.fuselages['fuselage'].lengths.total
         x_rqc = geometry.wings['main_wing'].origin[0][0] + 0.5*w_f*np.tan(sweep) + 0.25*c_root*(1 - (w_f/span)*(1-taper))    
-        
-            
-        p  = x_rqc/l_f
-        Kf = 1.5012*p**2. + 0.538*p + 0.0331
-        CmAlpha_body = Kf*w_f*w_f*l_f/Sref/mac   #NEGLECTS TAIL EFFECT ON CL_ALPHA
+
+        if geometry.fuselages['fuselage'].cm_alpha_method == 'k2-k1':
+            #Method 2: K2-K1, recommended for regional turboprop aircraft
+            k2k1 = 1 - w_f/l_f
+            volume = 0.2 * np.pi * w_f**2 * l_f
+            CmAlpha_body = volume * k2k1 /Sref/mac
+
+        else:
+            # Method 1: Raymer, standard method
+            p  = x_rqc/l_f
+            Kf = 5.0802*p**3. + 5.9131*p**2. - 1.5984*p + 0.3933
+            CmAlpha_body = Kf*w_f*w_f*l_f/Sref/mac
+
+        # CmAlpha_body = 1/36.5*w_f**2*l_f/Sref/mac*3 #very simple approch of Nelson: Flight Stability Eq. 2.33 page 51
     else:
         CmAlpha_body = 0.
 
@@ -134,7 +143,7 @@ def taw_cmalpha(geometry,mach,conditions,configuration):
         CL0_surf   = CL_alpha * ((twist_r+taper*twist_t)/2. -al0)
         
         #Calculate Cm_alpha contributions
-        l_surf    = x_surf + x_ac_surf - x_cg
+        l_surf    = (x_surf + x_ac_surf - x_cg)
         Cma       = -l_surf*s/(mac*Sref)*(CL_alpha*eta*downw)*(1. - vertical)
         cmo       = cmac+ s*eta*CL0_surf*l_surf*downw*(1. - vertical)/(mac*Sref)
         CmAlpha_surf.append(Cma)

@@ -9,3 +9,6 @@
 
 from .Solar_Logic import Solar_Logic
 from .Electronic_Speed_Controller import Electronic_Speed_Controller
+from .Electronic_Speed_Controller_eta import Electronic_Speed_Controller_eta
+from .Cable_Power import Cable_Power
+from .Electronic_Speed_Controller_eta_Inverter_Mid_Fid import Electronic_Speed_Controller_eta_Inverter_Mid_Fid

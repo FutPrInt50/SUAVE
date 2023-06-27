@@ -50,6 +50,7 @@ def tail_vertical_Raymer(vehicle, wing):
     Av          = wing.aspect_ratio
     t_c         = wing.thickness_to_chord 
     Nult        = vehicle.envelope.ultimate_load
+    k_vt        = 0.093/0.122  # vertical tail area calibration factor to exclude dorcal fin from mass calculation (Svt_w/o_dorcal = k_vt * Svt)
     
     H = 0
     if t_tail_flag:
@@ -57,7 +58,9 @@ def tail_vertical_Raymer(vehicle, wing):
     Lt = (wing_origin + wing_ac - main_origin - main_ac)
     Kz = Lt
     tail_weight = 0.0026 * (1 + H) ** 0.225 * DG ** 0.556 * Nult ** 0.536 \
-                  * Lt ** (-0.5) * Svt ** 0.5 * Kz ** 0.875 * np.cos(sweep) ** (-1) * Av ** 0.35 * t_c ** (-0.5)
+                  * Lt ** (-0.5) * (k_vt * Svt) ** 0.5 * Kz ** 0.875 * np.cos(sweep) ** (-1) * Av ** 0.35 * t_c ** (-0.5)
+       # k_vt * (0.0026 * (1 + H) ** 0.225 * DG ** 0.556 * Nult ** 0.536 \
+       #           * Lt ** (-0.5) * Svt ** 0.5 * Kz ** 0.875 * np.cos(sweep) ** (-1) * Av ** 0.35 * t_c ** (-0.5))
     return tail_weight * Units.lbs
 
 ## @ingroup Methods-Weights-Correlations-Raymer
@@ -104,8 +107,12 @@ def tail_horizontal_Raymer(vehicle, wing, elevator_fraction=0.4):
     sweep   = wing.sweeps.quarter_chord
     Ah      = wing.aspect_ratio
     Se      = elevator_fraction * Sht
+   # k_ht    = 1 # horizontal tail mass calibration factor
 
-    tail_weight = 0.0379 * Kuht * (1 + Fw / Bh) ** (-0.25) * DG ** 0.639 *\
+    tail_weight =0.0379 * Kuht * (1 + Fw / Bh) ** (-0.25) * DG ** 0.639 *\
                   vehicle.envelope.ultimate_load ** 0.1 * Sht ** 0.75 * Lt ** -1 *\
                   Ky ** 0.704 * np.cos(sweep) ** (-1) * Ah ** 0.166 * (1 + Se / Sht) ** 0.1
+    #k_ht * (0.0379 * Kuht * (1 + Fw / Bh) ** (-0.25) * DG ** 0.639 * \
+     #       vehicle.envelope.ultimate_load ** 0.1 * Sht ** 0.75 * Lt ** -1 * \
+     #       Ky ** 0.704 * np.cos(sweep) ** (-1) * Ah ** 0.166 * (1 + Se / Sht) ** 0.1)
     return tail_weight * Units.lbs

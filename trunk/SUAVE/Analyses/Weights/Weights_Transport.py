@@ -103,11 +103,14 @@ class Weights_Transport(Weights):
         results = SUAVE.Methods.Weights.Correlations.Common.empty_weight(vehicle, settings=self.settings,
                                                                          method_type=method)
 
-        # storing weigth breakdown into vehicle
-        vehicle.weight_breakdown = results
-
         # updating empty weight
-        vehicle.mass_properties.operating_empty = results.empty
+        #vehicle.mass_properties.operating_empty = results.empty
+        vehicle.mass_properties.operating_empty  = results.operating_empty #+1300
+        vehicle.mass_properties.zero_fuel_weight = results.zero_fuel_weight
+        vehicle.mass_properties.structures       = results.structures.total
+        vehicle.mass_properties.systems          = results.systems_breakdown.total
+        vehicle.mass_properties.operationals     = results.operational_items.total
+        vehicle.mass_properties.propulsion       = results.propulsion_breakdown.total
 
         # done!
         return results

@@ -32,6 +32,9 @@ def fuselage_weight_Raymer(vehicle, fuse, settings):
                 -.lenghts.total: total length                                   [m]
                 -.width: fuselage width                                         [m]
                 -.heights.maximum: maximum height of the fuselage               [m]
+            settings
+                - Klg = fuselage_mounted_landing_gear_factor
+                - Klg = 1.12 if fuselage-mounted main landing gear; = 1.0 otherwise
 
         Outputs:
             weight_fuse - weight of the fuselage                                [kilograms]

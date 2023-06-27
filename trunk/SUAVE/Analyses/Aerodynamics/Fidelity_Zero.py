@@ -85,9 +85,12 @@ class Fidelity_Zero(Markup):
         compute.lift.inviscid_wings                = Vortex_Lattice()
         compute.lift.vortex                        = SUAVE.Methods.skip
         compute.lift.fuselage                      = Common.Lift.fuselage_correction
+        compute.lift.propeller_wing_interaction    = SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Helper_Functions.propeller_wing_interaction_delta_lift_drag
         compute.lift.total                         = Common.Lift.aircraft_total
         
         compute.drag = Process()
+
+        compute.drag.miscellaneous                 = Common.Drag.miscellaneous_drag_aircraft_ESDU  #was moved before the parasite drag, so it can be included in parasite_total
         compute.drag.parasite                      = Process()
         compute.drag.parasite.wings                = Process_Geometry('wings')
         compute.drag.parasite.wings.wing           = Common.Drag.parasite_drag_wing 
@@ -96,16 +99,18 @@ class Fidelity_Zero(Markup):
         compute.drag.parasite.propulsors           = Process_Geometry('propulsors')
         compute.drag.parasite.propulsors.propulsor = Common.Drag.parasite_drag_propulsor
         compute.drag.parasite.pylons               = Common.Drag.parasite_drag_pylon
-        compute.drag.parasite.total                = Common.Drag.parasite_total
+        compute.drag.parasite.total = Common.Drag.parasite_total
         compute.drag.induced                       = Common.Drag.induced_drag_aircraft
         compute.drag.compressibility               = Process()
         compute.drag.compressibility.wings         = Process_Geometry('wings')
         compute.drag.compressibility.wings.wing    = Common.Drag.compressibility_drag_wing
         compute.drag.compressibility.total         = Common.Drag.compressibility_drag_wing_total
-        compute.drag.miscellaneous                 = Common.Drag.miscellaneous_drag_aircraft_ESDU
         compute.drag.untrimmed                     = Common.Drag.untrimmed
         compute.drag.trim                          = Common.Drag.trim
         compute.drag.spoiler                       = Common.Drag.spoiler_drag
+        compute.drag.landing_gear_extracted        = SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Helper_Functions.landing_gear_extracted_drag
+        compute.drag.oei_propeller                 = SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Helper_Functions.feathered_propeller_drag
+        compute.drag.tms                           = SUAVE.Methods.Aerodynamics.Common.Fidelity_Zero.Helper_Functions.tms_surrogate_drag
         compute.drag.total                         = Common.Drag.total_aircraft
         
         # Set subsonic mach numbers for the vortex lattice surrogate

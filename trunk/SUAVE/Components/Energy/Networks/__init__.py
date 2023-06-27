@@ -22,3 +22,11 @@ from .Scramjet                                import Scramjet
 from .Liquid_Rocket                           import Liquid_Rocket
 from .Internal_Combustion_Propeller_Constant_Speed import Internal_Combustion_Propeller_Constant_Speed
 from .PyCycle                                 import PyCycle
+from .TurboProp                               import TurboProp
+from .Hybrid_Turboprop_Battery_Propeller      import Hybrid_Turboprop_Battery_Propeller
+from .Propulsor_Turboshaft_Surrogate          import Propulsor_Turboshaft_Surrogate
+from .Simple_Propulsor                        import Simple_Propulsor
+from .Battery_Propeller_withBUS               import Battery_Propeller_withBUS
+from .Hybrid_Turboprop_Battery_Propeller_Bus  import Hybrid_Turboprop_Battery_Propeller_Bus
+from .Hybrid_Propulsor_Turboshaft_Surrogate_Battery_Propeller_Bus import Hybrid_Propulsor_Turboshaft_Surrogate_Battery_Propeller_Bus
+

@@ -108,13 +108,13 @@ class Container(Component.Container):
     
             Properties Used:
             None
-        """   
+        """
         total = np.array([[0.0,0.0,0.0]])
         for key,Comp in self.items():
             if isinstance(Comp,Physical_Component.Container):
                 total += Comp.total_moment() # recursive!
             elif isinstance(Comp,Physical_Component):
-                total += Comp.mass_properties.mass*(np.sum(np.array(Comp.origin),axis=0)+Comp.mass_properties.center_of_gravity)/len(Comp.origin)
+                total += Comp.mass_properties.mass*(np.sum(np.array(Comp.origin),axis=0)+Comp.mass_properties.center_of_gravity*len(Comp.origin))/len(Comp.origin)
 
         return total
     

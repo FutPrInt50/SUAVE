@@ -163,7 +163,14 @@ def payload_range(vehicle,mission,cruise_segment_tag,reserves=0.):
                   + str('%8.0F' % (err+FUEL[i]))+' (kg) | Residual : '+str('%8.0F' % err)))
 
         # Allocating resulting range in ouput array.
-        R[i] = ( results.segments[-1].conditions.frames.inertial.position_vector[-1,0] ) * Units.m / Units.nautical_mile      #Distance [nm]
+
+
+        range_alternate = results.segments.alternate.conditions.frames.inertial.position_vector[-1, 0] - results.segments.cruise.conditions.frames.inertial.position_vector[-1, 0]
+        range_loiter = results.segments.loiter.conditions.frames.inertial.position_vector[-1, 0] - results.segments.descent_5.conditions.frames.inertial.position_vector[-1, 0]
+        if i == 3:
+            R[i] = ( results.segments[-1].conditions.frames.inertial.position_vector[-1,0] - range_loiter) * Units.m / Units.nautical_mile      #Distance [nm]
+        else:
+            R[i] = (results.segments[-1].conditions.frames.inertial.position_vector[-1, 0] - range_loiter - range_alternate) * Units.m / Units.nautical_mile  # Distance [nm]
 
     # Inserting point (0,0) in output arrays
     R.insert(0,0)

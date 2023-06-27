@@ -9,3 +9,6 @@ from .hts_motor                              import hts_motor
 from .integrated_propulsion                  import integrated_propulsion
 from .integrated_propulsion_general_aviation import integrated_propulsion_general_aviation
 from .nasa_motor                             import nasa_motor
+from .turboprop_LoFid                        import turboprop_LoFid
+from .propeller                              import propeller_LoFid
+from .gear_box                               import gear_box

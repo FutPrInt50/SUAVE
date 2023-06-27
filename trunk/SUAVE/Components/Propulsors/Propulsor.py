@@ -64,6 +64,9 @@ class Propulsor(Physical_Component):
         self.areas.maximum     = 0.0
         self.areas.exit        = 0.0
         self.areas.inflow      = 0.0
+        self.one_engine_propeller_inoperative = False
+        self.propeller_wing_interaction = False
+        self.one_engine_propeller_inoperative_WTP = False
         
 ## @ingroup Components-Propulsors
 class Container(Physical_Component.Container):
@@ -101,7 +104,7 @@ class Container(Physical_Component.Container):
         #return [Nw.Battery_Propeller,Nw.Battery_Ducted_Fan,Nw.Lift_Forward_Propulsor,Nw.Ramjet,Nw.Solar, \
                 #Nw.Turbofan,Nw.Turbojet_Super]
                 
-        return [Nw.Turbofan,Nw.Turbojet_Super]
+        return [Nw.TurboProp,Nw.TurboProp]
 
                 
 

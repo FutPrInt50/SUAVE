@@ -68,7 +68,8 @@ def systems_Raymer(vehicle):
     propulsors     = vehicle.propulsors[propulsor_name]    
     fuse_w         = vehicle.fuselages['fuselage'].width / Units.ft
     fuse_h         = vehicle.fuselages['fuselage'].heights.maximum / Units.ft   
-    cargo_weight   = vehicle.payload.cargo.mass_properties.mass / Units.lbs
+    #cargo_weight   = vehicle.payload.cargo.mass_properties.mass / Units.lbs
+    cargo_weight = vehicle.mass_properties.max_cargo / Units.lbs
     
     if vehicle.passengers >= 150:
         flight_crew = 3 # number of flight crew
@@ -83,11 +84,14 @@ def systems_Raymer(vehicle):
 
     WSC = 36.28 * design_mach**0.003 * Scs**0.489 * Ns**0.484 * flight_crew**0.124
 
-    if num_pax >= 6.:
-        apu_wt = 7.0 * num_pax
-    else:
-        apu_wt = 0.0  # no apu if less than 9 seats
-    WAPU            = max(apu_wt, 70./Units.lbs)
+    if vehicle.systems.apu == "True":
+        if num_pax >= 6.:
+            apu_wt = 7.0 * num_pax
+        else:
+            apu_wt = 0.0  # no apu if less than 9 seats
+        WAPU            = max(apu_wt, 70./Units.lbs)
+    elif vehicle.systems.apu == "None":
+        WAPU = 0.0
     NENG            = propulsors.number_of_engines
     WIN = 4.509 * Kr * Ktp * flight_crew ** 0.541 * NENG * (L + Bw) ** 0.5
     WHYD = 0.2673 * Nf * (L + Bw) ** 0.937

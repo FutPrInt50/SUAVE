@@ -64,9 +64,10 @@ class Electronic_Speed_Controller(Energy_Component):
         """
         # Unpack, don't modify the throttle
         eta = (conditions.propulsion.throttle[:,0,None])*1.0
+        #eta = conditions.electric_throttle_sum[:,0,None]
         
         # Negative throttle is bad
-        eta[eta<=0.0] = 0.0
+        #eta[eta<=0.0] = 0.0 # maybe not for battery charging
         
         # Cap the throttle
         eta[eta>=1.0] = 1.0
@@ -75,7 +76,7 @@ class Electronic_Speed_Controller(Energy_Component):
         voltsout = eta*voltsin
         
         # Pack the output
-        self.outputs.voltageout = voltsout
+        self.outputs.voltageout = abs(voltsout) # fix for voltage is always postive, that with negativ current battery charging is possible
         
         return voltsout
     
@@ -97,7 +98,8 @@ class Electronic_Speed_Controller(Energy_Component):
         """
         
         # Unpack, don't modify the throttle
-        eta = (conditions.propulsion.throttle[:,0,None])*1.0        
+        eta = (conditions.propulsion.throttle[:,0,None])*1.0
+        #eta = conditions.electric_throttle_sum[:, 0, None]
         eff        = self.efficiency
         currentout = self.inputs.currentout
         currentin  = currentout*eta/eff

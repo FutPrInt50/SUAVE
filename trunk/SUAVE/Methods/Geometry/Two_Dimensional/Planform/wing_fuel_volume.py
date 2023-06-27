@@ -8,7 +8,7 @@
 #  Correlation-based methods for wing fuel capacity estimation
 # ----------------------------------------------------------------------
 ## @ingroup Methods-Geometry-Two_Dimensional-Cross_Section-Planform
-def wing_fuel_volume(wing):
+def wing_fuel_volume(wing, eta_tank=0.55):
     """Calculates the available fuel volume in a wing.
 
     Assumptions:
@@ -36,7 +36,7 @@ def wing_fuel_volume(wing):
     tc    = wing.thickness_to_chord
 
     # Calculate
-    volume = 0.90* tc * sref** 1.5 * ar**-0.5 * 0.55
+    volume = 0.90* tc * sref** 1.5 * ar**-0.5 * eta_tank
 
     # Pack
     wing.fuel_volume = volume

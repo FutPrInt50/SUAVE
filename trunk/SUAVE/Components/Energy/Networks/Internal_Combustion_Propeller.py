@@ -99,9 +99,11 @@ class Internal_Combustion_Propeller(Propulsor):
         # link
         propeller.inputs.omega = state.conditions.propulsion.rpm * Units.rpm
         propeller.thrust_angle = self.thrust_angle
-        
+        propeller.inputs.torque = torque
+
         # step 4
-        F, Q, P, Cp ,  outputs  , etap  = propeller.spin(conditions)
+        #F, Q, P, Cp ,  outputs  , etap  = propeller.spin(conditions)
+        F, Q, P, Cp = propeller.spin(conditions)
         
         # Check to see if magic thrust is needed
         eta        = conditions.propulsion.throttle
@@ -109,32 +111,55 @@ class Internal_Combustion_Propeller(Propulsor):
         F[eta>1.0] = F[eta>1.0]*eta[eta>1.0]   
         
         # link
-        propeller.outputs = outputs
+        #propeller.outputs = outputs
     
         # Pack the conditions for outputs
         a                                        = conditions.freestream.speed_of_sound
         R                                        = propeller.tip_radius   
         rpm                                      = engine.inputs.speed / Units.rpm
+
+        ################################################################################################################
+        # Second Propeller - BLI Try
+        ################################################################################################################
+        # propellerBLI = self.propeller
+        # # link
+        # propellerBLI.inputs.omega = np.ones_like(torque)*1200 * Units.rpm
+        # propellerBLI.thrust_angle = self.thrust_angle
+        # propellerBLI.inputs.torque = torque/3
+        #
+        # # step 4
+        # # F, Q, P, Cp ,  outputs  , etap  = propeller.spin(conditions)
+        # F_BLI, Q_BLI, P_BLI, Cp_BLI = propellerBLI.spin(conditions)
+        #
+        # conditions.propulsion.power_BLI = P_BLI
+
+        ################################################################################################################
+
           
         conditions.propulsion.rpm                = rpm
+        conditions.propulsion.propeller_rpm      = rpm
         conditions.propulsion.propeller_torque   = Q
-        conditions.propulsion.power              = P
+        conditions.propulsion.propeller_motor_torque = Q
+        conditions.propulsion.propeller_power_coefficient = Cp
+        conditions.propulsion.power              = P * num_engines
         conditions.propulsion.propeller_tip_mach = (R*rpm*Units.rpm)/a
         conditions.propulsion.motor_torque       = torque
          
         # noise
-        outputs.number_of_engines                = num_engines
-        conditions.noise.sources.propeller       = outputs
+        #outputs.number_of_engines                = num_engines
+        #conditions.noise.sources.propeller       = outputs
 
         # Create the outputs
-        F                                        = num_engines* F * [np.cos(self.thrust_angle),0,-np.sin(self.thrust_angle)]  
+        F                                        = num_engines* F * [np.cos(self.thrust_angle),0,-np.sin(self.thrust_angle)]
+        #F                                        = (num_engines * F + F_BLI) * [np.cos(self.thrust_angle), 0, -np.sin(self.thrust_angle)]
         F_mag                                    = np.atleast_2d(np.linalg.norm(F, axis=1))   
         conditions.propulsion.disc_loading       = (F_mag.T)/ (num_engines*np.pi*(R/Units.feet)**2)   # N/m^2                      
-        conditions.propulsion.power_loading      = (F_mag.T)/(P)    # N/W       
+        conditions.propulsion.power_loading      = (F_mag.T)/(P / num_engines)    # N/W
+        conditions.propulsion.propeller_thrust   = F_mag.T
         
         results = Data()
         results.thrust_force_vector = F
-        results.vehicle_mass_rate   = mdot
+        results.vehicle_mass_rate   = mdot * num_engines
         
         return results
     

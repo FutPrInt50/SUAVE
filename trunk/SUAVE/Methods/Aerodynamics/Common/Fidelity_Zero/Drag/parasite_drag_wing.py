@@ -117,13 +117,13 @@ def parasite_drag_wing(state,settings,geometry):
             total_segment_k_w            += segment_k_w*Sref_seg 
             total_segment_cf_w_u         += segment_cf_w_u*Sref_seg 
             total_segment_cf_w_l         += segment_cf_w_l*Sref_seg 
-            total_segment_k_comp_u       += segment_k_comp_u*Sref_seg 
+            total_segment_k_comp_u       += segment_k_comp_u*Sref_seg
             total_segment_k_comp_l       += segment_k_comp_l*Sref_seg 
             total_k_reyn_u               += k_reyn_u*Sref_seg                 
             total_k_reyn_l               += k_reyn_l*Sref_seg  
                 
-        Swet              = total_wetted_area     
-        wing.areas.wetted = total_wetted_area 
+        Swet              = total_wetted_area
+        wing.areas.wetted = total_wetted_area
         wing_parasite_drag= total_segment_parasite_drag  / Sref
         k_w               = total_segment_k_w / Sref
         cf_w_u            = total_segment_cf_w_u  / Sref
@@ -155,17 +155,17 @@ def parasite_drag_wing(state,settings,geometry):
             if t_c_w < 0.05:
                 Swet = 2.003* S_exposed_w
             else:
-                Swet = (1.977 + 0.52*t_c_w) * S_exposed_w            
+                Swet = (1.977 + 0.52*t_c_w) * S_exposed_w
             wing.areas.wetted = Swet 
         else:
-            Swet              = wing.areas.wetted                         
+            Swet              = wing.areas.wetted
 
         # compute parasite drag coef., form factor, skin friction coef., compressibility factor and reynolds number for wing
         wing_parasite_drag , k_w, cf_w_u, cf_w_l, k_comp_u, k_comp_l, k_reyn_u, k_reyn_l = compute_parasite_drag(re,mac_w,Mc,Tc,xtu,xtl,sweep_w,t_c_w,Sref,Swet,C)             
 
     # dump data to conditions
     wing_result = Data(
-        wetted_area               = Swet   , 
+        wetted_area               = Swet   ,
         reference_area            = Sref   , 
         parasite_drag_coefficient = wing_parasite_drag ,
         skin_friction_coefficient = (cf_w_u+cf_w_l)/2.   ,
@@ -243,7 +243,7 @@ def compute_parasite_drag(re,mac_w,Mc,Tc,xtu,xtl,sweep_w,t_c_w,Sref,Swet,C):
     k_w = k_w*(h00(Mc)) + 1*(1-h00(Mc))   
 
     # find the final result
-    wing_parasite_drag = k_w * cf_w_u * Swet / Sref /2. + k_w * cf_w_l * Swet / Sref /2.
+    wing_parasite_drag = (k_w * cf_w_u * (Swet ) / Sref /2. + k_w * cf_w_l * (Swet )/ Sref /2.) #* 1.075
 
 
     return wing_parasite_drag , k_w, cf_w_u, cf_w_l, k_comp_u, k_comp_l, k_reyn_u, k_reyn_l

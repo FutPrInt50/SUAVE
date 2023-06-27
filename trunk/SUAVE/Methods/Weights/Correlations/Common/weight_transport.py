@@ -36,6 +36,14 @@ from SUAVE.Methods.Weights.Correlations.Raymer import fuselage_weight_Raymer
 from SUAVE.Methods.Weights.Correlations.Raymer import landing_gear_Raymer
 from SUAVE.Methods.Weights.Correlations.Raymer import systems_Raymer
 from SUAVE.Methods.Weights.Correlations.Raymer import total_prop_Raymer
+from SUAVE.Methods.Weights.Correlations.Raymer.prop_system import *
+#from SUAVE.Methods.Weights.Correlations.Raymer import fuel_system_Raymer
+
+from SUAVE.Methods.Weights.Correlations.Propulsion.turboprop_LoFid import turboprop_LoFid
+from SUAVE.Methods.Weights.Correlations.Propulsion.propeller import propeller_LoFid
+from SUAVE.Methods.Weights.Correlations.Electric.Electric_Components_LoFid import *
+from SUAVE.Methods.Weights.Correlations.Thermal_Management_System.Thermal_Management_System_LoFid import TMS_system_LoFid
+from SUAVE.Methods.Weights.Correlations.Propulsion.gear_box import gear_box
 
 from SUAVE.Attributes.Solids.Aluminum import Aluminum
 
@@ -151,8 +159,10 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
         wt_factors.main_wing    = 0.
         wt_factors.empennage    = 0.
         wt_factors.fuselage     = 0.
-        wt_factors.structural   = 0.
+        wt_factors.structural = 0.
         wt_factors.systems      = 0.
+        wt_factors.operating_items = 0.
+        wt_factors.landing_gear = 0.
     else:
         wt_factors = settings.weight_reduction_factors
         if 'structural' in wt_factors and wt_factors.structural != 0.:
@@ -161,16 +171,16 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
             wt_factors.empennage    = 0.
             wt_factors.fuselage     = 0.
             wt_factors.systems      = 0.
-        else:
-            wt_factors.structural   = 0.
-            wt_factors.systems      = 0.
+            wt_factors.landing_gear = 0.
+        # else:
+        #     wt_factors.structural   = 0.
+        #     wt_factors.systems      = 0.
 
     # Prop weight (propulsion pod weight is calculated separately)
     wt_prop_total   = 0
     wt_prop_data    = None
     for prop in vehicle.propulsors:
-        if isinstance(prop, Nets.Turbofan) or isinstance(prop, Nets.Turbojet_Super) or isinstance(prop,
-                                                                                                  Nets.Propulsor_Surrogate):
+        if isinstance(prop, Nets.Turbofan) or isinstance(prop, Nets.Turbojet_Super) or isinstance(prop,Nets.Propulsor_Surrogate):
             
             if not isinstance(prop.wing_mounted,list):
                 prop.wing_mounted = [prop.wing_mounted] * int(prop.number_of_engines)
@@ -182,6 +192,7 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
             thrust_sls  = prop.sealevel_static_thrust
             if 'total_weight' in prop.keys():
                 wt_prop         = prop.total_weight
+               # WFSYS = fuel_system_Raymer(vehicle, num_eng)
             elif method_type == 'FLOPS Simple' or method_type == 'FLOPS Complex':
                 wt_prop_data    = total_prop_flops(vehicle, prop)
                 wt_prop         = wt_prop_data.wt_prop
@@ -198,11 +209,168 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
             prop.mass_properties.mass = wt_prop
             wt_prop_total += wt_prop
 
+        if isinstance(prop, Nets.Internal_Combustion_Propeller):
+            if hasattr(prop, 'specific_power'):
+                wt_prop_total = prop.number_of_engines * turboprop_LoFid(prop)
+                prop.mass_properties.mass = wt_prop_total
+
+        if isinstance(prop, Nets.Propulsor_Turboshaft_Surrogate):
+            if hasattr(prop, 'specific_power'):
+                wt_prop_total = prop.number_of_engines * turboprop_LoFid(prop)
+                prop.mass_properties.mass = wt_prop_total
+
+
+            if hasattr(prop.turboshaft, 'specific_power'):
+                wt_turboprop = Data()
+
+                mENG = turboprop_LoFid(prop.turboshaft)
+                WFSYS           = fuel_system_Raymer(vehicle, prop.number_of_engines)
+                WNAC            = nacelle_Raymer(vehicle, prop, mENG)
+                WEC, WSTART     = misc_engine_Raymer(vehicle, prop, mENG)
+                wt_turboprop.turboshaft = mENG * prop.number_of_engines + (WFSYS + WNAC + WEC + WSTART) * (1 - wt_factors.propulsion)
+                turboshaft = SUAVE.Components.Physical_Component()
+                turboshaft.mass_properties.mass = wt_turboprop.turboshaft
+                turboshaft.origin = prop.turboshaft.origin
+                vehicle.systems.turboshaft = turboshaft
+
+                wt_turboprop.propeller = propeller_LoFid(prop.propeller, prop.turboshaft.sea_level_power) * prop.number_of_engines
+                propeller = SUAVE.Components.Physical_Component()
+                propeller.mass_properties.mass = wt_turboprop.propeller
+                propeller.origin = prop.propeller.origin
+                vehicle.systems.propeller = propeller
+
+                wt_turboprop.gearbox = gear_box(prop.turboshaft.sea_level_power, prop.turboshaft.nominal_rpm_low_pressure_turbine, prop.propeller.nominal_rpm) * prop.number_of_engines
+                gearbox = SUAVE.Components.Physical_Component()
+                gearbox.mass_properties.mass = wt_turboprop.gearbox
+                gearbox.origin = prop.gearbox.origin
+                vehicle.systems.gearbox = gearbox
+
+                wt_prop_total = sum(wt_turboprop)
+
+        #if isinstance(prop, 'total_weight'):
+        if hasattr(prop, 'total_weight'):
+            wt_prop_total =  vehicle.propulsors.network.total_weight
+            prop.mass_properties.mass = wt_prop_total
+        if isinstance(prop, Nets.Hybrid_Turboprop_Battery_Propeller_Bus) or isinstance(prop, Nets.Hybrid_Propulsor_Turboshaft_Surrogate_Battery_Propeller_Bus):
+            wt_hybrid = Data()
+
+            mENG = turboprop_LoFid(prop.turboshaft)
+            WFSYS           = fuel_system_Raymer(vehicle, prop.number_of_engines)
+            WNAC            = nacelle_Raymer(vehicle, prop, mENG)
+            WEC, WSTART     = misc_engine_Raymer(vehicle, prop, mENG)
+            wt_hybrid.turboshaft = mENG * prop.number_of_engines + (WFSYS + WNAC + WEC + WSTART) * (1 - wt_factors.propulsion)
+            turboshaft = SUAVE.Components.Physical_Component()
+            turboshaft.mass_properties.mass = wt_hybrid.turboshaft
+            turboshaft.origin = prop.turboshaft.origin
+            vehicle.systems.turboshaft = turboshaft
+            
+            wt_hybrid.emotor = electric_motor_LoFid(prop.emotor) * prop.number_of_engines
+            emotor = SUAVE.Components.Physical_Component()
+            emotor.mass_properties.mass = wt_hybrid.emotor
+            emotor.origin = prop.emotor.origin
+            vehicle.systems.emotor = emotor
+
+            wt_hybrid.emotorWTP = electric_motor_LoFid(prop.emotorWTP) * prop.number_of_WTP
+            emotorWTP = SUAVE.Components.Physical_Component()
+            emotorWTP.mass_properties.mass = wt_hybrid.emotorWTP
+            emotorWTP.origin = prop.emotorWTP.origin
+            vehicle.systems.emotorWTP = emotorWTP
+
+            wt_hybrid.esc = electronic_speed_controller_LoFid(prop.esc,prop.emotor) * prop.number_of_engines
+            esc = SUAVE.Components.Physical_Component()
+            esc.mass_properties.mass = wt_hybrid.esc
+            esc.origin = prop.esc.origin
+            vehicle.systems.esc = esc
+
+            wt_hybrid.escWTP = electronic_speed_controller_LoFid(prop.escWTP,prop.emotorWTP) * prop.number_of_WTP
+            escWTP = SUAVE.Components.Physical_Component()
+            escWTP.mass_properties.mass = wt_hybrid.escWTP
+            escWTP.origin = prop.escWTP.origin
+            vehicle.systems.escWTP = escWTP
+
+            wt_hybrid.dcdc = dcdc_converter_LoFid(prop.dcdc,np.sum([prop.emotor.rated_power * prop.number_of_engines, prop.emotorWTP.rated_power * prop.number_of_WTP]))*2 #redundancy
+            dcdc = SUAVE.Components.Physical_Component()
+            dcdc.mass_properties.mass = wt_hybrid.dcdc
+            dcdc.origin = prop.dcdc.origin
+            vehicle.systems.dcdc = dcdc
+
+            wt_hybrid.propeller = propeller_LoFid(prop.propeller, prop.turboshaft.sea_level_power + prop.emotor.rated_power) * prop.number_of_engines
+            propeller = SUAVE.Components.Physical_Component()
+            propeller.mass_properties.mass = wt_hybrid.propeller
+            propeller.origin = prop.propeller.origin
+            vehicle.systems.propeller = propeller
+
+            wt_hybrid.propellerWTP = propeller_LoFid(prop.propellerWTP, prop.emotorWTP.rated_power) * prop.number_of_WTP
+            propellerWTP = SUAVE.Components.Physical_Component()
+            propellerWTP.mass_properties.mass = wt_hybrid.propellerWTP
+            propellerWTP.origin = prop.propellerWTP.origin
+            vehicle.systems.propellerWTP = propellerWTP
+
+            wt_hybrid.gearboxWTP = gear_box(prop.emotorWTP.rated_power, prop.emotorWTP.nominal_rpm, prop.propellerWTP.nominal_rpm) * prop.number_of_WTP
+            gearboxWTP = SUAVE.Components.Physical_Component()
+            gearboxWTP.mass_properties.mass = wt_hybrid.gearboxWTP
+            gearboxWTP.origin = prop.gearboxWTP.origin
+            vehicle.systems.gearboxWTP = gearboxWTP
+
+            wt_hybrid.gearbox = gear_box(prop.turboshaft.sea_level_power, prop.turboshaft.nominal_rpm_low_pressure_turbine, prop.propeller.nominal_rpm) * prop.number_of_engines
+            gearbox = SUAVE.Components.Physical_Component()
+            gearbox.mass_properties.mass = wt_hybrid.gearbox
+            gearbox.origin = prop.gearbox.origin
+            vehicle.systems.gearbox = gearbox
+
+            wt_hybrid.cable = cable_LoFid(prop)
+            cable = SUAVE.Components.Physical_Component()
+            cable.mass_properties.mass = wt_hybrid.cable
+            cable.origin = prop.cable.origin
+            vehicle.systems.cable = cable
+
+            TMS = SUAVE.Components.Energy.Thermal_Management_System
+            # if isinstance(prop.tms, TMS.Thermal_Management_System):
+            #     wt_hybrid.tms = TMS_system_LoFid(prop.tms)
+            #     tms = SUAVE.Components.Physical_Component()
+            #     tms.mass_properties.mass = wt_hybrid.tms
+            #     tms.origin = prop.tms.origin
+            #     vehicle.systems.tms = tms
+            if isinstance(prop.tms_vcs, TMS.TMS_Surrogates):
+                if prop.tms_vcs.tag == 'CASE1' or prop.tms_vcs.tag == 'CASE1_v2':
+                    wt_hybrid.tms_vcs = np.float(prop.tms_vcs.interp_mTMS(prop.tms_vcs.design_point)) * prop.tms_vcs.number_system * prop.tms_vcs.specific_power_factor
+                elif prop.tms_vcs.tag == 'CASE2':
+                    wt_hybrid.tms_vcs = np.float(prop.tms_vcs.interp_mTMS((prop.tms_vcs.design_point, prop.tms_vcs.shin_hx_area))) * prop.tms_vcs.number_system * prop.tms_vcs.specific_power_factor
+                tms_vcs = SUAVE.Components.Physical_Component()
+                tms_vcs.mass_properties.mass = wt_hybrid.tms_vcs
+                # print('TMS_VCS: %.1f kg' % tms_vcs.mass_properties.mass)
+                tms_vcs.origin = prop.tms_vcs.origin
+                vehicle.systems.tms_vcs = tms_vcs
+            if isinstance(prop.tms_liquid, TMS.TMS_Surrogates):
+                if prop.tms_liquid.tag == 'CASE4' or prop.tms_liquid .tag == 'CASE4_v2':
+                    wt_hybrid.tms_liquid = np.float(prop.tms_liquid.interp_mTMS(prop.tms_liquid.design_point)) * prop.tms_liquid.number_system * prop.tms_liquid.specific_power_factor
+                elif prop.tms_liquid.tag == 'CASE6':
+                    wt_hybrid.tms_liquid = np.float(prop.tms_liquid.interp_mTMS((prop.tms_liquid.design_point, prop.tms_liquid.shin_hx_area))) * prop.tms_liquid.number_system * prop.tms_liquid.specific_power_factor
+                tms_liquid = SUAVE.Components.Physical_Component()
+                tms_liquid.mass_properties.mass = wt_hybrid.tms_liquid
+                # print('TMS_Liquid: %.1f kg' % tms_liquid.mass_properties.mass)
+                tms_liquid.origin = prop.tms_liquid.origin
+                vehicle.systems.tms_liquid = tms_liquid
+
+            # sum all components
+            wt_prop_total = sum(wt_hybrid)
+
+
     # Payload Weight
     if method_type == 'FLOPS Simple' or method_type == 'FLOPS Complex':
-        payload = payload_FLOPS(vehicle)
+        if 'pax' in settings.payload:
+            payload = payload_FLOPS(vehicle, weight_per_passenger=settings.payload.pax)
+        else:
+            payload = payload_FLOPS(vehicle)
     else:
-        payload = payload_weight(vehicle)
+        if 'pax' and 'baggage' in settings.payload:
+            payload = payload_weight(vehicle, wt_passenger=settings.payload.pax, wt_baggage=settings.payload.baggage)
+        elif 'pax' in settings.payload:
+            payload = payload_weight(vehicle, wt_passenger=settings.payload.pax)
+        elif 'baggage' in settings.payload:
+            payload = payload_weight(vehicle, wt_baggage=settings.payload.baggage)
+        else:
+            payload = payload_weight(vehicle)
         
     vehicle.payload.passengers = SUAVE.Components.Physical_Component()
     vehicle.payload.baggage    = SUAVE.Components.Physical_Component()
@@ -218,6 +386,11 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
     else:
         wt_oper = operating_items(vehicle)
 
+     # for item in wt_oper.keys():
+       # wt_oper[item] *= (1. - wt_factors.operating_items)
+    if 'operating_items_less_crew' in wt_oper: 
+        wt_oper.operating_items_less_crew*= (1. - wt_factors.operating_items)
+        wt_oper.total = wt_oper.operating_items_less_crew + wt_oper.flight_crew + wt_oper.flight_attendants
     # System Weight
     if method_type == 'FLOPS Simple' or method_type == 'FLOPS Complex':
         wt_sys = systems_FLOPS(vehicle)
@@ -321,6 +494,9 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
     else:
         landing_gear = landing_gear_weight(vehicle)
 
+    landing_gear.nose = landing_gear.nose * (1. - wt_factors.landing_gear)
+    landing_gear.main = landing_gear.main * (1. - wt_factors.landing_gear)
+
     # Distribute all weight in the output fields
     output                                  = Data()
     output.structures                       = Data()
@@ -341,6 +517,9 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
                               + output.structures.fuselage + output.structures.main_landing_gear + output.structures.nose_landing_gear \
                               + output.structures.paint + output.structures.nacelle
 
+
+
+
     output.propulsion_breakdown = Data()
     if wt_prop_data is None:
         output.propulsion_breakdown.total               = wt_prop_total
@@ -354,6 +533,11 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
         output.propulsion_breakdown.thrust_reversers    = wt_prop_data.wt_thrust_reverser
         output.propulsion_breakdown.miscellaneous       = wt_prop_data.wt_engine_controls + wt_prop_data.wt_starter
         output.propulsion_breakdown.fuel_system         = wt_prop_data.fuel_system
+
+
+
+
+
 
     output.systems_breakdown                        = Data()
     output.systems_breakdown.control_systems        = wt_sys.wt_flight_control
@@ -376,9 +560,24 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
     output.operational_items = wt_oper
 
     output.empty                = output.structures.total + output.propulsion_breakdown.total + output.systems_breakdown.total
-    output.operating_empty      = output.empty + output.operational_items.total
+
+    #if isinstance(prop, Nets.Internal_Combustion_Propeller):
+    #if vehicle.propulsors.network.battery in vehicle.propulsors.network():
+    #if hasattr(vehicle.propulsors.network, 'battery'):
+    #if isinstance('battery',prop):
+    if hasattr(prop, 'battery'):
+        output.operating_empty = output.empty + output.operational_items.total + vehicle.propulsors.network.battery.mass_properties.mass
+
+        battery = SUAVE.Components.Physical_Component()
+        battery.mass_properties.mass = vehicle.propulsors.network.battery.mass_properties.mass
+        battery.origin = prop.battery.origin
+        vehicle.systems.battery = battery
+
+    else:
+        output.operating_empty      = output.empty + output.operational_items.total
     output.zero_fuel_weight     = output.operating_empty + output.payload_breakdown.total
-    output.fuel                 = vehicle.mass_properties.max_takeoff - output.zero_fuel_weight
+    output.fuel                 = vehicle.mass_properties.takeoff - output.zero_fuel_weight
+    output.takeoff              = vehicle.mass_properties.takeoff
     output.max_takeoff          = vehicle.mass_properties.max_takeoff
 
     control_systems         = SUAVE.Components.Physical_Component()
@@ -390,24 +589,28 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
     hydraulics              = SUAVE.Components.Physical_Component()
     avionics                = SUAVE.Components.Energy.Peripherals.Avionics()
     optionals               = SUAVE.Components.Physical_Component()
+    crew                    = SUAVE.Components.Physical_Component()
 
     if not hasattr(vehicle.landing_gear, 'nose'):
         vehicle.landing_gear.nose       = SUAVE.Components.Landing_Gear.Nose_Landing_Gear()
-    vehicle.landing_gear.nose.mass  = output.structures.nose_landing_gear
+    #vehicle.landing_gear.nose.mass  = output.structures.nose_landing_gear
+    vehicle.landing_gear.nose.mass_properties.mass  = output.structures.nose_landing_gear
     if not hasattr(vehicle.landing_gear, 'main'):
         vehicle.landing_gear.main       = SUAVE.Components.Landing_Gear.Main_Landing_Gear()   
-    vehicle.landing_gear.main.mass  = output.structures.main_landing_gear  
+    #vehicle.landing_gear.main.mass  = output.structures.main_landing_gear
+    vehicle.landing_gear.main.mass_properties.mass  = output.structures.main_landing_gear
 
-    control_systems.mass_properties.mass        = output.systems_breakdown.control_systems
-    electrical_systems.mass_properties.mass     = output.systems_breakdown.electrical
-    furnishings.mass_properties.mass            = output.systems_breakdown.furnish
+    control_systems.mass_properties.mass        = output.systems_breakdown.control_systems #c
+    electrical_systems.mass_properties.mass     = output.systems_breakdown.electrical #c
+    furnishings.mass_properties.mass            = output.systems_breakdown.furnish #c
     avionics.mass_properties.mass               = output.systems_breakdown.avionics \
                                                 + output.systems_breakdown.instruments
-    air_conditioner.mass_properties.mass        = output.systems_breakdown.air_conditioner
+    air_conditioner.mass_properties.mass        = output.systems_breakdown.air_conditioner #c
     fuel.mass_properties.mass                   = output.fuel
     apu.mass_properties.mass                    = output.systems_breakdown.apu
-    hydraulics.mass_properties.mass             = output.systems_breakdown.hydraulics
+    hydraulics.mass_properties.mass             = output.systems_breakdown.hydraulics #c
     optionals.mass_properties.mass              = output.operational_items.operating_items_less_crew
+    crew.mass_properties.mass                   = output.operational_items.flight_crew + output.operational_items.flight_attendants
 
     # assign components to vehicle
     vehicle.systems.control_systems         = control_systems
@@ -418,6 +621,7 @@ def empty_weight(vehicle, settings=None, method_type='New SUAVE'):
     vehicle.systems.fuel                    = fuel
     vehicle.systems.apu                     = apu
     vehicle.systems.hydraulics              = hydraulics
-    vehicle.systems.optionals               = optionals   
+    vehicle.systems.optionals               = optionals
+    vehicle.systems.crew                    = crew
 
     return output

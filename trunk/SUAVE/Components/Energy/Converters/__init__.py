@@ -14,6 +14,7 @@ from .Motor_Lo_Fid               import Motor_Lo_Fid
 from .Propeller                  import Propeller
 from .Rotor                      import Rotor
 from .Propeller_Lo_Fid           import Propeller_Lo_Fid
+from .Delft_Propeller_Lo_Fid     import Delft_Propeller_Lo_Fid
 from .Generator_Zero_Fid         import Generator_Zero_Fid
 from .Internal_Combustion_Engine import Internal_Combustion_Engine
 from .Ram                        import Ram
@@ -25,3 +26,10 @@ from .Supersonic_Nozzle          import Supersonic_Nozzle
 from .Shaft_Power_Off_Take       import Shaft_Power_Off_Take
 from .Gearbox                    import Gearbox
 from .Rotor                      import Rotor
+from .Engine_General             import Engine_General
+from .Combustion_Turboprop       import Combustion_Turboprop
+from .Motor_Lo_Fid_eta           import Motor_Lo_Fid_eta
+from .DCDC_Converter_Lo_Fid      import DCDC_Converter_Lo_Fid
+from .Turboshaft_Surrogate       import Turboshaft_Surrogate
+from .DCDC_Converter_Mid_Fid     import DCDC_Converter_Mid_Fid
+from .Motor_Mid_Fid_eta          import Motor_Mid_Fid_eta

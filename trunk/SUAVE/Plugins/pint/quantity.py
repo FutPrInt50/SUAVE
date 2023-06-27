@@ -12,7 +12,12 @@ from __future__ import division, unicode_literals, print_function, absolute_impo
 import copy
 import operator
 import functools
-from collections import Iterable
+import sys
+
+if sys.version_info < (3, 10):
+    from collections import MutableMapping
+else:
+    from collections.abc import MutableMapping
 
 from .unit import DimensionalityError, UnitsContainer, UnitDefinition, UndefinedUnitError
 from .measurement import Measurement

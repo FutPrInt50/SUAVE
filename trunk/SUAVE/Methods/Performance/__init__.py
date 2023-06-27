@@ -13,4 +13,9 @@ from .electric_V_h_diagram              import electric_V_h_diagram
 from .propeller_single_point            import propeller_single_point
 from .electric_payload_range            import electric_payload_range
 from .maximum_lift_to_drag              import maximum_lift_to_drag
+from .payload_range_variable_reserve    import payload_range_variable_reserve
+from .payload_range_2_4_org             import payload_range_2_4_org
+from .off_design_mission_calculation_variable_reserve import off_design_mission_calculation_variable_reserve
+from .sizing_chart                      import sizing_chart
+from .sizing_chart_mission_evaluate     import sizing_chart_mission_evaluate
 

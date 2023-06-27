@@ -49,6 +49,7 @@ class Landing_Gear(Physical_Component):
         """
        
         self.tag = 'landing_gear'
+        self.landing_gear_extracted = False
     
 # ----------------------------------------------------------------------
 #  Handle Linking

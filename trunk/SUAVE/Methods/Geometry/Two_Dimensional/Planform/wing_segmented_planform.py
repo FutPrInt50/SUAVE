@@ -3,6 +3,8 @@
 # 
 # Created:  Mar 2019, E. Botero 
 # Modified: Feb 2021, T. MacDonald
+#           Sep 2021, J. Mangold
+#           Nov 2011, D. Eisenhut
 
 # ----------------------------------------------------------------------
 #  Imports
@@ -94,7 +96,11 @@ def wing_segmented_planform(wing, overwrite_reference = False):
     
     # Calculate the weighted area, this should not include any unexposed area 
     A_wets = 2*(1+0.2*t_cs[:-1])*As
-    wet_area = np.sum(A_wets)
+    #wet_area = np.sum(A_wets) # something wrong - wetted area around 2 x reference area
+    wet_area = (np.sum(A_wets) - A_wets[0])*(1+sym)
+
+    # Calculate the exposed are
+    exposed_area = (np.sum(As)-As[0])*(1+sym)
     
     # Calculate the wing area
     ref_area = np.sum(As)*(1+sym)
@@ -146,12 +152,14 @@ def wing_segmented_planform(wing, overwrite_reference = False):
         Cxys.append(segment_centroid(le_sweeps[i],lengths_dim[i],dxs[i],dys[i],dzs[i], tapers[i], 
                                      As[i], dihedrals[i], chords_dim[i], chords_dim[i+1]))
 
-    aerodynamic_center= (np.dot(np.transpose(Cxys),As)/(ref_area/(1+sym)))
+    aerodynamic_center = (np.dot(np.transpose(Cxys),As)/(ref_area/(1+sym)))
 
     single_side_aerodynamic_center = (np.array(aerodynamic_center)*1.)
     single_side_aerodynamic_center[0] = single_side_aerodynamic_center[0] - MAC*.25    
     if sym== True:
         aerodynamic_center[1] = 0
+
+    aerodynamic_center[0] = single_side_aerodynamic_center[0]
     
     # Total length for supersonics
     total_length = np.tan(le_sweep_total)*semispan + chords[-1]*RC
@@ -161,6 +169,7 @@ def wing_segmented_planform(wing, overwrite_reference = False):
         wing.areas.reference         = ref_area
         wing.areas.wetted            = wet_area
         wing.aspect_ratio            = AR
+        wing.areas.exposed           = exposed_area
 
     wing.spans.total                    = total_len
     wing.chords.mean_geometric          = mgc

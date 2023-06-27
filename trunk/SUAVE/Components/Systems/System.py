@@ -51,6 +51,7 @@ class System(Physical_Component):
         self.origin          = [[0.0,0.0,0.0]]
         self.control         = None
         self.accessories     = None
+        self.apu             = None
         
     
 # ------------------------------------------------------------

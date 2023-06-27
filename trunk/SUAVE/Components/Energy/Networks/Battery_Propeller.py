@@ -121,37 +121,48 @@ class Battery_Propeller(Propulsor):
         
         # Step 2
         esc.voltageout(conditions)
+        #eta_sum = conditions.propulsion.throttle[:, 0, None] # new because of hybrid
+        #esc.voltageout(conditions, eta_sum) # new because of hybrid
         
         # link
-        motor.inputs.voltage = esc.outputs.voltageout 
+        motor.inputs.voltage = esc.outputs.voltageout
         
         # step 3
-        motor.omega(conditions)
+        #motor.omega(conditions)
+        motor.power_lo(conditions)
+        motor_power = motor.outputs.power
+        motor_current = motor.outputs.current
+        motor.outputs.omega = 1200 * np.ones_like(motor_power) * Units.rpm
+        motor_torque = motor_power / (motor.outputs.omega)
+        motor.outputs.torque =  motor_torque
         
         # link
-        propeller.inputs.omega  = motor.outputs.omega
+        propeller.inputs.omega  = motor.outputs.omega# 1200 * Units.rpm #motor.outputs.omega
         propeller.thrust_angle  = self.thrust_angle
-        propeller.pitch_command = self.pitch_command 
+        propeller.pitch_command = self.pitch_command
+        propeller.inputs.torque = motor.outputs.power / propeller.inputs.omega
         
         # step 4
-        F, Q, P, Cp, outputs , etap = propeller.spin(conditions)
+        #F, Q, P, Cp, outputs , etap = propeller.spin(conditions)
+        F, Q, P, Cp = propeller.spin(conditions)
             
         # Check to see if magic thrust is needed, the ESC caps throttle at 1.1 already
-        eta        = conditions.propulsion.throttle[:,0,None]
-        P[eta>1.0] = P[eta>1.0]*eta[eta>1.0]
-        F[eta>1.0] = F[eta>1.0]*eta[eta>1.0]
+        #eta        = conditions.propulsion.throttle[:,0,None]
+        #P[eta>1.0] = P[eta>1.0]*eta[eta>1.0]
+        #F[eta>1.0] = F[eta>1.0]*eta[eta>1.0]
         
         # link
-        propeller.outputs = outputs
+        #propeller.outputs = outputs
         
         # Run the avionics
-        avionics.power()
+        #avionics.power()
 
         # Run the payload
-        payload.power()
+        #payload.power()
 
         # Run the motor for current
-        motor.current(conditions)
+        #motor.current(conditions)
+
         
         # link
         esc.inputs.currentout =  motor.outputs.current
@@ -160,14 +171,15 @@ class Battery_Propeller(Propulsor):
         esc.currentin(conditions)
 
         # Calculate avionics and payload power
-        avionics_payload_power = avionics.outputs.power + payload.outputs.power
+        #avionics_payload_power = avionics.outputs.power + payload.outputs.power
 
         # Calculate avionics and payload current
-        avionics_payload_current = avionics_payload_power/self.voltage
+        #avionics_payload_current = avionics_payload_power/self.voltage
 
         # link
-        battery.inputs.current  = esc.outputs.currentin*num_engines + avionics_payload_current
-        battery.inputs.power_in = -(esc.outputs.voltageout*esc.outputs.currentin*num_engines + avionics_payload_power)
+        battery.inputs.current  = esc.outputs.currentin*num_engines #+ avionics_payload_current
+        #battery.inputs.power_in = -(esc.outputs.voltageout*esc.outputs.currentin*num_engines) #+ avionics_payload_power)esc.inputs.voltagein
+        battery.inputs.power_in = -(esc.inputs.voltagein*esc.outputs.currentin*num_engines)
         battery.energy_calc(numerics)        
     
         # Pack the conditions for outputs
@@ -192,17 +204,20 @@ class Battery_Propeller(Propulsor):
         conditions.propulsion.propeller_torque              = Q
         conditions.propulsion.battery_specfic_power         = -battery_draw/battery.mass_properties.mass # Wh/kg
         conditions.propulsion.propeller_tip_mach            = (R*rpm*Units.rpm)/a
+        conditions.propulsion.propeller_power_coefficient   = Cp
         
         # noise
-        outputs.number_of_engines                   = num_engines
-        conditions.noise.sources.propeller          = outputs
+        #outputs.number_of_engines                   = num_engines
+        #conditions.noise.sources.propeller          = outputs
 
         # Create the outputs
         F                                           = num_engines* F * [np.cos(self.thrust_angle),0,-np.sin(self.thrust_angle)]      
         mdot                                        = state.ones_row(1)*0.0
         F_mag                                       = np.atleast_2d(np.linalg.norm(F, axis=1))  
         conditions.propulsion.disc_loading          = (F_mag.T)/ (num_engines*np.pi*(R)**2) # N/m^2                  
-        conditions.propulsion.power_loading         = (F_mag.T)/(P)                         # N/W 
+        conditions.propulsion.power_loading         = (F_mag.T)/(P)
+        conditions.propulsion.propeller_thrust      = F_mag.T
+        conditions.propulsion.power                 = P * num_engines
         
         results = Data()
         results.thrust_force_vector = F
@@ -234,7 +249,8 @@ class Battery_Propeller(Propulsor):
         """                  
         
         # Here we are going to unpack the unknowns (Cp) provided for this network
-        segment.state.conditions.propulsion.propeller_power_coefficient = segment.state.unknowns.propeller_power_coefficient
+        #segment.state.conditions.propulsion.propeller_power_coefficient = segment.state.unknowns.propeller_power_coefficient
+        #segment.state.conditions.propulsion.propeller_omega = segment.state.unknowns.propeller_omega
         segment.state.conditions.propulsion.battery_voltage_under_load  = segment.state.unknowns.battery_voltage_under_load
         
         return
@@ -272,8 +288,8 @@ class Battery_Propeller(Propulsor):
         v_max     = self.voltage
         
         # Return the residuals
-        segment.state.residuals.network[:,0] = q_motor[:,0] - q_prop[:,0]
-        segment.state.residuals.network[:,1] = (v_predict[:,0] - v_actual[:,0])/v_max
+        #segment.state.residuals.network[:,0] = q_motor[:,0] - q_prop[:,0]
+        segment.state.residuals.network[:,0] = (v_predict[:,0] - v_actual[:,0])/0.5#/v_max
         
         return    
             

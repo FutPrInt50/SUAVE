@@ -5,6 +5,7 @@
 # Modified: M. Vegh, November 2015         
 # Modified: Feb 2016, Andrew Wendorff
 #           Mar 2020, M. Clarke
+#           Oct 2021. D. Eisenhut
 # ----------------------------------------------------------------------
 #  Imports
 # ----------------------------------------------------------------------
@@ -26,6 +27,7 @@ from SUAVE.Methods.Flight_Dynamics.Static_Stability.Approximations.datcom import
 from SUAVE.Methods.Flight_Dynamics.Dynamic_Stability import Approximations as Approximations
 from SUAVE.Methods.Flight_Dynamics.Dynamic_Stability import Full_Linearized_Equations as Full_Linearized_Equations
 from SUAVE.Methods.Flight_Dynamics.Dynamic_Stability.Full_Linearized_Equations import Supporting_Functions as Supporting_Functions
+from SUAVE.Methods.Center_of_Gravity.compute_mission_center_of_gravity import compute_mission_center_of_gravity
 
 # package imports
 import numpy as np
@@ -139,15 +141,33 @@ class Fidelity_Zero(Stability):
         stability.static  = Data()
         stability.dynamic = Data()
 
+        weights      = conditions.weights.total_mass
+        fuel_weights = weights - configuration.mass_properties.zero_fuel_weight
+        cg_mission   = compute_mission_center_of_gravity(geometry,fuel_weights)
+        stability.static.center_of_gravity_mission = cg_mission
+
+        stability.static.percent_mac = (cg_mission - (geometry.wings.main_wing.origin[0][0] +
+                                                      geometry.wings.main_wing.aerodynamic_center[0] - 0.25 * geometry.wings.main_wing.chords.mean_aerodynamic))/geometry.wings.main_wing.chords.mean_aerodynamic * 100
+
         # Calculate CL_alpha 
         conditions.lift_curve_slope = datcom(geometry.wings['main_wing'],mach)
 
         # Calculate change in downwash with respect to change in angle of attack
+        sref = geometry.wings.main_wing.areas.reference
+        span = geometry.wings.main_wing.spans.projected
         for surf in geometry.wings:
-            sref          = surf.areas.reference
-            span          = (surf.aspect_ratio * sref ) ** 0.5
+            # sref          = surf.areas.reference
+            # span          = (surf.aspect_ratio * sref ) ** 0.5
             surf.CL_alpha = datcom(surf,mach)
-            surf.ep_alpha = Supporting_Functions.ep_alpha(surf.CL_alpha, sref, span)
+            if surf.vertical == False:
+                # surf.ep_alpha = Supporting_Functions.ep_alpha(surf.CL_alpha, sref, span)
+                surf.ep_alpha = Supporting_Functions.ep_alpha(conditions.lift_curve_slope, sref, span)
+            else:
+                surf.ep_alpha = 0.
+
+        #geometry.wings.horizontal_stabilizer.ep_alpha = geometry.wings.main_wing.ep_alpha
+        geometry.wings.main_wing.ep_alpha = np.zeros_like(geometry.wings.main_wing.ep_alpha)
+        #geometry.wings.horizontal_stabilizer.ep_alpha = np.zeros_like(geometry.wings.main_wing.ep_alpha)*0.2
 
         # Static Stability Methods
         stability.static.Cm_alpha,stability.static.Cm0, stability.static.CM  = taw_cmalpha(geometry,mach,conditions,configuration)
@@ -161,7 +181,7 @@ class Fidelity_Zero(Stability):
         stability.static.static_margin = -stability.static.Cm_alpha/conditions.lift_curve_slope
         
         # neutral point 
-        stability.static.neutral_point = cg_x + mac*stability.static.static_margin
+        stability.static.neutral_point = cg_mission + mac*stability.static.static_margin
         
         # Dynamic Stability
         if np.count_nonzero(configuration.mass_properties.moments_of_inertia.tensor) > 0:    

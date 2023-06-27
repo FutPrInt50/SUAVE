@@ -54,6 +54,11 @@ def parasite_drag_fuselage(state,settings,geometry):
     freestream  = state.conditions.freestream
     Sref        = fuselage.areas.front_projected
     Swet        = fuselage.areas.wetted
+    n_belly     = fuselage.n_belly
+    size_belly  = fuselage.size_belly
+    cf_belly    = 0.00242
+    FF_belly    = 1.34
+    Q_belly     = 1.3
     
     l_fus  = fuselage.lengths.total
     d_fus  = fuselage.effective_diameter
@@ -65,7 +70,6 @@ def parasite_drag_fuselage(state,settings,geometry):
 
     # reynolds number
     Re_fus = re*(l_fus)
-    
     # skin friction coefficient
     cf_fus, k_comp, k_reyn = compressible_turbulent_flat_plate(Re_fus,Mc,Tc)
     
@@ -86,8 +90,16 @@ def parasite_drag_fuselage(state,settings,geometry):
     
     k_fus = (1 + form_factor*du_max_u)**2
 
-    fuselage_parasite_drag = k_fus * cf_fus * Swet / Sref  
-    
+
+    fuselage_parasite_drag = (k_fus * cf_fus * Swet / Sref) + n_belly * (cf_belly * FF_belly * Q_belly * (Swet * size_belly )/ Sref)
+    #fuselage_parasite_drag = (k_fus * cf_fus * Swet / Sref) #basic equation for fuselage without bellyfairing
+    #n_belly = 0 if the aircraft has no additional belly fairing
+    #n_belly = 1 if the aircraft has an affitional belly fairing
+    #the wetted area of the belly fairing is aproximated as 15% of the fuselages wetted area
+    #cf_belly = 0.00242 for an ATR42
+    #FF_belly = 1.34 for standard highwing aircraft
+    #Q_belly = 1.3 for the ATR 42
+
     # dump data to conditions
     fuselage_result = Data(
         wetted_area               = Swet   , 

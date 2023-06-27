@@ -88,9 +88,11 @@ class Internal_Combustion_Engine(Energy_Component):
         # calculating the density ratio:
         sigma = rho / rho0
 
-        # calculating available power based on Gagg and Ferrar model (ref: S. Gudmundsson, 2014 - eq. 7-16)
-        Pavailable                    = PSLS * (sigma - 0.117) / 0.883        
-        Pavailable[h_flat > altitude] = PSLS
+        # calculating available power based on Gagg and Ferrar model (ref: # - eq. 7-16)
+        #Pavailable                    = PSLS * (sigma - 0.117) / 0.883
+        #Pavailable                    = PSLS * (1.132 * sigma - 0.132)
+        Pavailable = PSLS
+        #Pavailable[h_flat > altitude] = PSLS
 
         # applying throttle setting
         output_power                  = Pavailable * throttle 
