@@ -1,0 +1,1 @@
+The toolbox & any data generated or provided by it is for academic & research purposes only. No warranty, guarantee or support is provided for the use of this toolbox or its results. Results from the design toolbox and any of its modules must be used for informational purposes only. Proper design validation must be conducted before using this data for any engineering application.
